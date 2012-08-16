@@ -1,4 +1,7 @@
 <?PHP
+/*
+ * Eventually make a cli script out of this using composer.
+ */
 if (file_exists('../data/scanJobs.sqlite')) {
 	unlink('../data/scanJobs.sqlite');
 }
