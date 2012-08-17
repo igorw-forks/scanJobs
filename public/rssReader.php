@@ -15,7 +15,7 @@ $rssFeedURL ="http://careers.stackoverflow.com/jobs/feed?a=12";
 $feed       = simplexml_load_file($rssFeedURL);
 $geoCodeURL = 'http://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false';
 $db         = new SQlite3('../data/scanJobs.sqlite');
-$geocode = new CalEvans\Google\Geocode();
+// $geocode = new CalEvans\Google\Geocode();
 
 foreach($feed->channel->item as $item) {
 	$jobId    = null;
@@ -55,7 +55,7 @@ echo "--Found ".$thisLocation." in the cache.\n";
 echo "--Did not find ".$thisLocation." in the cache. checking it now.\n";
 sleep(1);
 			// cache miss
-			$payload = $geocode->fetchGeocode($thisLocation);
+			$payload = CalEvans\Google\Geocode::fetchGeocode($thisLocation);
 			$sql = sprintf("insert into city(name, latitude, longitude) VALUES ('%s','%s','%s');",
 						   $thisLocation,
 						   $payload->results[0]->geometry->location->lat,

@@ -13,7 +13,7 @@ class Geocode
 		
 	}
 
-	public function fetchGeocode($location)
+	public static function fetchGeocode($location)
 	{
 		$urlencodedLocation = urlencode($location);
 		$finalURL   = sprintf($this->baseURL,$urlencodedLocation);
