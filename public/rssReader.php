@@ -1,24 +1,29 @@
 <?PHP
 /* 
- * store the date posted
- * store the lat & long
  * Filter for US only (optional, allow other contries)
  * Build a seperate front-end using silex that brings up a US map
  * Show intensity of each job market over 30 days by enlarging the circle and deepening the color for each new job posted. Reduce as jobs go 30 days old.
  * Can we work twilio into this somehow?
  * can we work simplyhired.com's salary Db into this somehow?
+ * @todo break this into objects. use knp's console componant to call it from the cli as a cronjob.
  */
+$loader = require_once '../vendor/autoload.php';
+$loader->register();
+use CalEvans\Google;
 
 $rssFeedURL ="http://careers.stackoverflow.com/jobs/feed?a=12";
 $feed       = simplexml_load_file($rssFeedURL);
 $geoCodeURL = 'http://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false';
 $db         = new SQlite3('../data/scanJobs.sqlite');
+$geocode = new CalEvans\Google\Geocode();
 
 foreach($feed->channel->item as $item) {
-	$jobId = null;
+	$jobId    = null;
     $checksum = md5($item->title . $item->pubDate);
-    $sql = sprintf("select id from job where checksum='%s';",$checksum);
+
+    $sql     = sprintf("select id from job where checksum='%s';",$checksum);
     $results = $db->query($sql);
+
     if ($row = $results->fetchArray()) {
         // we already know this job...move along
         continue;
@@ -37,7 +42,7 @@ foreach($feed->channel->item as $item) {
 	$title = substr($title,0,$locationStart-1);
 	$datePublished = new DateTime((string)$item->pubDate);
 	$title = SQLite3::escapeString($title);
-	$sql = sprintf("insert into job (title, telecommute, date_posted, checksum) VALUES ('%s','%s','%s','%s');",$title,$telecommute,$datePublished->getTimestamp(),$checksum);
+	$sql = sprintf("insert into job (title, telecommute, date_posted, checksum) VALUES ('%s','%s','%s','%s');",$title,$telecommute,$item->pubDate,$checksum);
 	$db->exec($sql);
 	$jobId = $db->lastInsertRowId();
 	foreach($locationArray as $thisLocation) {
@@ -48,10 +53,9 @@ foreach($feed->channel->item as $item) {
 echo "--Found ".$thisLocation." in the cache.\n"; 
 		} else {
 echo "--Did not find ".$thisLocation." in the cache. checking it now.\n";
-sleep(2);
+sleep(1);
 			// cache miss
-			$jsonPayload = file_get_contents(sprintf($geoCodeURL,urlencode($thisLocation)));
-			$payload = json_decode($jsonPayload);
+			$payload = $geocode->fetchGeocode($thisLocation);
 			$sql = sprintf("insert into city(name, latitude, longitude) VALUES ('%s','%s','%s');",
 						   $thisLocation,
 						   $payload->results[0]->geometry->location->lat,
