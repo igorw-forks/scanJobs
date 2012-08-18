@@ -1,5 +1,5 @@
 <?PHP
-namespace CalEvans;
+namespace CalEvans\Command;
 use CalEvans\Google;
 
 use Knp\Command\Command;
