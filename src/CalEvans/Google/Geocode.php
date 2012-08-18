@@ -13,12 +13,22 @@ class Geocode
 		
 	}
 
-	public static function fetchGeocode($location)
-	{
-		$urlencodedLocation = urlencode($location);
-		$finalURL   = sprintf($this->baseURL,$urlencodedLocation);
-		$rawPayload = file_get_contents($finalURL);
-		$payload    = json_decode($rawPayload);
+	public function fetchGeocode($location)
+	{	
+		$loopCounter=0;
+		do {
+			$urlencodedLocation = urlencode($location);
+			$finalURL   = sprintf($this->baseURL,$urlencodedLocation);
+			$rawPayload = file_get_contents($finalURL);
+			$payload    = json_decode($rawPayload);
+			if ($payload->status=='OVER_QUERY_LIMIT') {
+				$continueLooping = true;
+				sleep(2);
+			} else {
+				$continueLooping = false;
+			}
+			$loopCounter++;
+		} while ($continueLooping AND $loopCounter<3);
 		return $payload;
 	}
 }

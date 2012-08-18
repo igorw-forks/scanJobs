@@ -2,7 +2,12 @@
 	"name": "scanJobs",
 	"minimum-stability": "dev", 
     "require": {
-		"knplabs/console-service-provider": ">=1.0.0"
+		"symfony/config": "dev-master",
+		"silex/silex": "1.0.*",
+		"symfony/yaml": "dev-master",
+		"doctrine/dbal": ">=2.2",
+		"knplabs/console-service-provider": ">=1.0.0",
+		"igorw/config-service-provider": "*.*.*"
     },
     "autoload": {
         "psr-0": {"CalEvans": "src/"}
