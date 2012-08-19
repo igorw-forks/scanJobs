@@ -13,6 +13,7 @@
 	<script src="/js/jquery.js"></script>
 	<script type="text/javascript">
       function initialize() {
+		fetchKey();
         var mapOptions = {
           center: new google.maps.LatLng(37.090240, -95.7128910),
           zoom: 5,
@@ -21,9 +22,29 @@
         var map = new google.maps.Map(document.getElementById("map_canvas"),
             mapOptions);
       }
+
+	function fetchKey() 
+	{
+    	$.ajax({
+                url: "/parameters/mapapikey",
+              cache: false,
+           dataType: "json"
+         }).done(function(payload  ) {
+            alert(payload);
+            });
+	}
     </script>
   </head>
   <body onload="initialize()">
     <div id="map_canvas" style="width:100%; height:100%"></div>
-  </body>
+		<script>
+			$.ajax({
+			url: "/parameters/mapsapikey",
+			cache: false,
+			dataType: "json"
+			}).done(function(payload  ) {
+			alert(payload.key);
+			});
+	</script>
+</body>
 </html>
