@@ -1,5 +1,8 @@
 <?PHP
 namespace CalEvans\Command;
+/*
+ * @todo break job specific functiosn out into a job mobel
+ */
 use CalEvans\Google;
 
 use Knp\Command\Command;
@@ -29,8 +32,7 @@ class ScanJobsCommand extends Command
 		$feed       = simplexml_load_file($rssFeedURL);
 		
 		foreach($feed->channel->item as $singleItem) {
-
-			if ($jobId = $this->fetchJob($singleItem->title, $singleItem->pubDate)) {
+			if ($jobId = $this->fetchJob($singleItem->guid)) {
 				// we already know this job
 				continue;
 			}
@@ -38,12 +40,12 @@ class ScanJobsCommand extends Command
 
 			// build the payload to write to the db
 			$payload = array();
+			$payload['guid']         = $singleItem->guid; 
 			$payload['title']        = $this->parseTitle($singleItem->title);
 			$payload['location']     = $this->parseLocation($singleItem->title);
 			$payload['location']     = $this->geocodeLocations($payload['location']);
 			$payload['telecommute']  = $this->parseTelecommute($singleItem->title);
 			$payload['pubDate']      = $singleItem->pubDate;
-			$payload['checksum']     = md5($singleItem->title . $singleItem->pubDate);
 			$this->saveJob($payload);
 			$output->writeln($singleItem->title);
 		}
@@ -51,11 +53,11 @@ class ScanJobsCommand extends Command
     }
 
 
-	protected function fetchJob($title, $pubDate) {
-		$checksum = md5($title . $pubDate);
+	protected function fetchJob($guid) {
 		$db = $this->getSilexApplication()['db'];
-		$results = $db->executeQuery('select id from job where checksum=?',array($checksum))->fetchColumn();
-		return $results;
+		$jobId = $db->executeQuery("select id from job where guid=?",array($guid))
+					->fetchColumn();
+		return $jobId;
 	}
 	
 	
@@ -114,11 +116,13 @@ class ScanJobsCommand extends Command
 	protected function geocodeLocations($locationArray)
 	{
 		$db = $this->getSilexApplication()['db'];
+
 		foreach($locationArray as $key=>$value) {
-			
-			if ($cityId = $db->executeQuery('select id from city where name=?',
-			                               array($key))
-							 ->fetchColumn()) {
+
+			$cityId = $db->executeQuery("select id from city where name=?",array($key))
+						 ->fetchColumn();
+
+			if ((int)$cityId>0) {				 
 				// we know this city already
 				$locationArray[$key]['cityId']=$cityId;
 			} else {
@@ -128,6 +132,7 @@ class ScanJobsCommand extends Command
 				if ($payload->status==="OK") {
 					$locationArray[$key]['latitude']  = $payload->results[0]->geometry->location->lat;
 					$locationArray[$key]['longitude'] = $payload->results[0]->geometry->location->lng;
+					$locationArray[$key]['country']   = $this->geocoder->fetchCountry();
 				}
 			}
 			
@@ -142,10 +147,10 @@ class ScanJobsCommand extends Command
 		$db->beginTransaction();
 		try {
 			$db->insert('job',
-						['title'       => $db->quote($payload['title']['original']),
-						 'telecommute' => $db->quote($payload['telecommute']),
-						 'date_posted' => $db->quote($payload['pubDate']),
-						 'checksum'    => $payload['checksum'] ]);
+						['title'       => $payload['title']['original'],
+						 'telecommute' => $payload['telecommute'],
+						 'date_posted' => $payload['pubDate'],
+						 'guid'        => $payload['guid'] ]);
 			$jobId = $db->lastInsertId();
 			foreach($payload['location'] as $location=>$singleLocation) {
 				if (is_null($singleLocation['cityId']) AND 
@@ -157,15 +162,16 @@ class ScanJobsCommand extends Command
 				if (is_null($singleLocation['cityId'])) {
 					// if we don't know this city, insert it
 					$db->insert('city',
-								['name'      => $db->quote($location), 
-								 'latitude'  => $db->quote($singleLocation['latitude']), 
-								 'longitude' => $db->quote($singleLocation['longitude']) ]);
-					$payload['locationArray'][$location]['cityId'] = $db->lastInsertId();
+								['name'      => $location, 
+								 'country'   => $singleLocation['country'],
+								 'latitude'  => $singleLocation['latitude'], 
+								 'longitude' => $singleLocation['longitude'] ]);
+					$payload['location'][$location]['cityId'] = $db->lastInsertId();
 				}
 
 				$db->insert('job_city',
 							['id_job' => $jobId,
-							 'id_city' => $payload['locationArray'][$location]['cityId']]);
+							 'id_city' => $payload['location'][$location]['cityId']]);
 
 			}
 
