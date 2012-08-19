@@ -10,7 +10,7 @@
 		"igorw/config-service-provider": "*.*.*"
     },
     "autoload": {
-        "psr-0": {"CalEvans": "src/"},
-		"psr-0": {"ScanJobs": "app/"}
+        "psr-0": {"CalEvans": "src/",
+				  "ScanJobs": "app/"}
 	}
 }
