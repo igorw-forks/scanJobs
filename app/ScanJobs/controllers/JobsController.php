@@ -23,14 +23,8 @@ class JobsController implements ControllerProviderInterface
             return $this->getDayList();
         };   
    
-		$getCityList = function()
-		{
-			return $this->getCityList();
-		};
-
         $controller = $app['controllers_factory'];
 		$controller->get('/dayList',$getDayList);
-		$controller->get('/cityList',$getCityList);
         $controller->get('/',$getJobsList);
 
         return $controller;
@@ -55,23 +49,6 @@ class JobsController implements ControllerProviderInterface
 		return $this->app->json($payload,200);
 	
 	}   
-
-	// this one needs to be in the city controller
-	protected function getCityList()
-	{
-		$country='US'; //parameterize this
-		$db = $this->app['db'];
-		$sql = 'SELECT c.name,
-					   c.latitude,
-					   c.longitude,
-					   c.country	
-				  FROM city c
-				 WHERE c.country=?';
-        $results = $db->executeQuery($sql,array($country))
-		              ->fetchAll();
-		$payload = array('results' => $results);
-		return $this->app->json($payload,200);
-	}
 
 	// my gut feeling is this belogns to jobs because jobs define what days are available.
     protected function getDayList()
