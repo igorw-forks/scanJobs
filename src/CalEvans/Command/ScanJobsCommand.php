@@ -27,7 +27,7 @@ class ScanJobsCommand extends Command
     {
 		$app = $this->getSilexApplication();
 		$db = $app['db'];
-
+		
 		$rssFeedURL = "http://careers.stackoverflow.com/jobs/feed?a=12";
 		$feed       = simplexml_load_file($rssFeedURL);
 		
@@ -37,6 +37,7 @@ class ScanJobsCommand extends Command
 				continue;
 			}
 			
+			$pubDate = new \DateTime($singleItem->pubDate);
 
 			// build the payload to write to the db
 			$payload = array();
@@ -45,7 +46,7 @@ class ScanJobsCommand extends Command
 			$payload['location']     = $this->parseLocation($singleItem->title);
 			$payload['location']     = $this->geocodeLocations($payload['location']);
 			$payload['telecommute']  = $this->parseTelecommute($singleItem->title);
-			$payload['pubDate']      = $singleItem->pubDate;
+			$payload['pubDate']      = $pubDate->format('Y-m-d h:i e');
 			$this->saveJob($payload);
 			$output->writeln($singleItem->title);
 		}

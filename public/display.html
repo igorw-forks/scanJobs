@@ -12,39 +12,181 @@
     </script>
 	<script src="/js/jquery.js"></script>
 	<script type="text/javascript">
-      function initialize() {
-		fetchKey();
-        var mapOptions = {
-          center: new google.maps.LatLng(37.090240, -95.7128910),
-          zoom: 5,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-        var map = new google.maps.Map(document.getElementById("map_canvas"),
-            mapOptions);
-      }
+		function initialize() {
+			$(document).data('dayList',new Array());
+			
+			var mapOptions = {
+				center: new google.maps.LatLng(37.090240, -95.7128910),
+				zoom: 5,
+			 mapTypeId: google.maps.MapTypeId.ROADMAP
+			};
+			var map = new google.maps.Map(document.getElementById("map_canvas"),
+				mapOptions);
+           $(document).data('map',map);
+		   /*
+		    * Kickoff the data loading process.
+			*/
+			fetchCityList();
+			return;
+		}
 
-	function fetchKey() 
-	{
-    	$.ajax({
-                url: "/parameters/mapapikey",
-              cache: false,
-           dataType: "json"
-         }).done(function(payload  ) {
-            alert(payload);
-            });
-	}
+		function fetchCityList()
+		{
+        	$.ajax({url: "/jobs/cityList",
+                    cache: false,
+                    dataType: 'json'})
+                .success(function (data) {
+                    holding = {};
+                    for(lcvA = 0;lcvA<data.results.length;lcvA++) {
+                        holding[data.results[lcvA].name] = new CityPoint(data.results[lcvA],$(document).data('map'));
+                    }
+
+                    $(document).data('cityList',holding);
+                    fetchJobs();
+
+                })
+                .fail(function (data) {
+                    alert("I'm sorry, we ran into a problem fetching some of the data. Error: 3")});
+
+		}
+
+
+		function fetchJobs()
+		{
+	        $.ajax({
+	                url: "/jobs/",
+	                cache: false,
+	                dataType: 'json'})
+	           .success(function (data){ 
+	                    dayList = $(document).data('dayList');
+	                    for(key=0;key<data.results.length;key++) {
+		                    dayList.push(data.results[key]);
+	                    }
+	                    // put it back
+	                    $(document).data('dayList',dayList);
+	                    startPlot();
+	                    return;
+	           })
+	           .fail(function (data) {
+	                alert("I'm sorry, we ran into a problem fetching some of the data. Error: 2")});
+
+			return;
+		}
+
+
+		function startPlot()
+		{
+			timer = setInterval(plotJobs,100)
+			$(document).data('jobPlotTimer',timer);
+			return;
+		}
+
+		function plotJobs()
+		{
+			var dayList = $(document).data('dayList');
+			
+			if (dayList.length>0) {
+				var thisJob = dayList.shift();
+				var cityList = $(document).data('cityList');
+					cityList[thisJob.city_name].addJob(thisJob);
+				$(document).data('cityList',cityList);					
+				$(document).data('dayList',dayList);
+			} else {
+				clearInterval($(document).data('jobPlotTimer'));	
+				console.log('Plotting complete');
+			}
+			return;
+	
+		}
+
+		/*
+		 * We really aren't plotting jobs, we are plotting cities.
+		 * So we create one object for each city. The radius starts
+		 * off small and grows with each new job added. So we are
+		 * changing the workflow a bit. now we will first fetch a
+		 * list of cities and create the points for them. Then
+		 * we fetch a list of jobs, same way we are doing it now,
+		 * one day's worth at a time - for no other reason than 
+		 * I like doing it that way - and stuff them into a SINGLE
+		 * array, not a group of arrays.
+		 *
+		 * Finally, we plot each job on a .5 second timer. We
+		 * find the cityPoint in the array and add a job. the 
+		 * cityPoint then either displays itself or updates 
+		 * itself and sets a timer to slowly fade the color.
+		 *
+		 * I've decided that the circle size won't reduce, only expand.
+		 */
+		function CityPoint(data, map)
+		{
+			"use strict";
+		    /*
+		     * Initialalize properties
+		     */
+		    this.point         = new google.maps.LatLng(data.latitude,data.longitude);
+		    this.circleOptions = {'editable'    : false,
+		                          'clickable'   : false,
+		                          'strokeWeight':.25,
+		                          'fillColor'   :'#FF0000',
+		                          'center'      :this.point,
+		                          'radius'      :20000,
+		                          'map'         :map,
+		                          'visible'     :false};
+		    this.circle        = new google.maps.Circle(this.circleOptions);                      
+		    this.jobsList      = {};
+		    this.name          = data.name;
+		    this.jobCount      = 0;
+		    this.opacity       = 1.0;
+		    this.timer         = null;
+
+		    /*
+		     * Define methods
+		     */
+		    this.addJob = function (jobData) 
+		    {
+		        this.jobsList[jobData.id] = jobData;
+		        this.circle.setRadius(this.circleOptions.radius + (this.jobCount*1000));
+		        this.jobCount++;
+		        this.opacity = 1.0;
+		        this.circle.setOptions({'fillOpacity': this.opacity});
+
+		        if (!this.circle.getVisible()) {
+			        this.circle.setVisible(true);
+		        }
+		        
+		        if (this.timer === null) {
+		            this.startTimer();
+		        }
+
+		        return;
+		    };
+
+		    this.startTimer = function()
+		    {
+		    	var self = this;
+		    	var thisCityName = this.name;
+		        self.timer = setInterval(function() 
+		        {
+		        	var cityList = $(document).data('cityList');
+		        	var thisCity = cityList[thisCityName]
+		            if (thisCity.opacity > 0.30) {
+		                thisCity.opacity = thisCity.opacity - 0.025;
+		                thisCity.circle.setOptions({'fillOpacity':thisCity.opacity});
+		            } else {
+		            	console.log('Done with:' + thisCity.name);
+		                clearInterval(thisCity.timer);
+		                self.timer = null;
+		            }
+		            $(document).data('cityList',cityList);
+		            return;
+		    	}, 500,thisCityName); // should decrement every 1 second.
+		        return;
+		    };
+
+		} // function CityPoint
     </script>
   </head>
-  <body onload="initialize()">
+  <body onload="initialize();">
     <div id="map_canvas" style="width:100%; height:100%"></div>
-		<script>
-			$.ajax({
-			url: "/parameters/mapsapikey",
-			cache: false,
-			dataType: "json"
-			}).done(function(payload  ) {
-			alert(payload.key);
-			});
-	</script>
-</body>
+  </body>
 </html>
