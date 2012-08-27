@@ -1,0 +1,15 @@
+#!/bin/bash
+git branch -D deploy
+git checkout -b deploy 
+cat .gitignore | grep -v vendor > .gitignore.new 
+mv .gitignore.new .gitignore
+for gitdir in `find ./vendor -name ".git"` 
+do
+	BASENAME=$(dirname $gitdir)
+	rm -rf $BASENAME"/.git"
+	rm -rf $BASENAME"/.gitignore"
+done
+chmod -R 775 vendor 
+git add vendor 
+git commit -a -m "Integrate vendors for deploy" && \
+echo "Deploy branch completed"
