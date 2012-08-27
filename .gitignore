@@ -1,0 +1,6 @@
+logs/*
+composer.lock
+tmp/*
+data/*
+.*.swp
+vendor
