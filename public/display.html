@@ -144,8 +144,17 @@
 		     */
 		    this.addJob = function (jobData) 
 		    {
+				var addToRadius = 0;
+
 		        this.jobsList[jobData.id] = jobData;
-		        this.circle.setRadius(this.circleOptions.radius + (this.jobCount*1000));
+				
+				if (this.jobCount<155555) {
+					addToRadius = (this.jobCount*1000);
+				}else {
+					addToRadius = 10000;
+				}
+
+		        this.circle.setRadius(this.circleOptions.radius + addToRadius);
 		        this.jobCount++;
 		        this.opacity = 1.0;
 		        this.circle.setOptions({'fillOpacity': this.opacity});
