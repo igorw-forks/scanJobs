@@ -12,4 +12,8 @@ done
 chmod -R 775 vendor 
 git add vendor 
 git commit -a -m "Integrate vendors for deploy" && \
+git push external deploy
+git checkout master
+git branch -D deploy
+composer.phar update
 echo "Deploy branch completed"
