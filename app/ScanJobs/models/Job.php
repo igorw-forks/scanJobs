@@ -16,7 +16,10 @@ class Job
 
 	public function load($id=null)
 	{
+		$this->resetData();
+
 		$db = $this->app['db'];
+		
 		$sql = 'select j.*,
 		               c.id as cityId,
 					   c.name,
@@ -49,7 +52,20 @@ class Job
 			$this->data['location']['latitude']  = $singleLocation['latitude'];
 			$this->data['location']['longitude'] = $singleLocation['longitude'];
 		}
-		return;
+
+		// tags
+		$sql = "Select t.tag, 
+		               t.id 
+		          from tags t left join job_tag jt on t.id = jt.id_tag
+				 where jt.id_job = ?";
+		$results = $db->execQuery($sql,array((int)$id))
+		              ->fetchAll();
+		// store them in the tag array
+		foreach($results as $singleTag) {
+			$this->data['tag'][$singleTag['tag']] = $singleTag;	
+		}
+
+		return $this;
 	}
 
 
@@ -57,7 +73,7 @@ class Job
 	{
 		$returnValue = false;
 
-		if (isset($this->data['id']) &&  !is_null($this->data['id'])) {
+		if ($this->data['id']>=0) {
 			$returnValue = $this->updateExistingJob();
 		} else {
 			$returnValue = $this->insertNewJob();
@@ -85,12 +101,29 @@ class Job
 	}
 
 
+	static function fetchJobsList($db,$country)
+	{
+        $sql = "SELECT j.id,
+                       j.title, 
+                       j.date_posted, 
+                       j.guid, 
+                       c.name as city_name 
+                  FROM job j LEFT JOIN job_city jc on j.id = jc.id_job
+                             LEFT JOIN city c on jc.id_city = c.id
+                 WHERE c.country = ?
+                 ORDER BY date_posted";
+        $results = $db->executeQuery($sql,array($country))
+                      ->fetchAll();
+        return $results;	
+	}
+
+
 	public function parse($job)
 	{
-        $this->data = array();
-        $this->data['guid'] = $job->guid;
+		$this->resetData();
+		$this->data['guid'] = (string)$job->guid;
 
-		$this->parseTitle($job->title)
+		$this->parseTitle((string)$job->title)
              ->parseLocation()
 			 ->geocodeLocations()
 			 ->parseTelecommute()
@@ -103,9 +136,21 @@ class Job
     }
 
 
-    protected function parseTitle($title)
+	protected function resetData()
+	{
+		$this->data = array('title'       => array(),
+		                    'location'    => array(),
+							'tag'         => array(),
+						    'guid'        => null,
+						    'pubDate'     => null,
+							'id'          => -1,
+						    'telecommute' => false);
+		return $this;				  
+	}
+
+
+	protected function parseTitle($title)
     {
-		$this->data['title'] = array();
         
 		$this->data['title']['original'] = $title;
         $title = trim(str_replace('(telecommute)','',$title));
@@ -125,7 +170,6 @@ class Job
     protected function parseLocation()
     {
 		$title = $this->data['title']['original'];
-        $this->data['location'] = array();
         $title = trim(str_replace('(telecommute)','',$title));
         $locationStart = strripos($title,'(')+1;
         $locationEnd   = strripos($title,')');
@@ -180,13 +224,26 @@ class Job
 	
 	protected function parseTags()
 	{
+		$db = $this->app['db'];
 		// this is a bit of brute force but it'll do for now.
 		$html = file_get_contents($this->data['guid']);
 		preg_match_all('/<a class="post-tag" href=".*">(.*)<\/a>/mU',$html,$matches);
-		$this->data['tags'] = $matches[1];
+		$sql = 'select id, tag from tag where tag=?';
+		foreach ($matches[1] as $singleTag) {
+			$singleTag = strtoupper($singleTag);
+			$results = $db->executeQuery($sql,array($singleTag))
+			              ->fetchAssoc();
+
+			if (count($results)===1) {
+				$this->data['tag'][$singletag] = array($results);
+			} else {
+				$this->data['tag'][$singleTag] = array('id'  => null,
+													   'tag' => $singleTag);
+			}
+		}
+
 		return $this;
 	}
-
 
 	protected function insertNewJob()
 	{
@@ -225,9 +282,21 @@ class Job
 
                 $db->insert('job_city',
                             ['id_job'  => $this->data['id'],
-                             'id_city' => $payload['location'][$location]['cityId']]);
+                             'id_city' => $this->data['location'][$location]['cityId']]);
 
             }
+			
+			// tags
+			foreach($this->data['tags'] as $singleTag) {
+				if (is_null($singleTag['id'])) {
+					$db->insert('tag',
+								['tag'=> $singleTag['tag']]);
+					$this->data['tag'][$singleTag['tag']]['id'] = $db->lastInsertId();			
+				}
+				$db->insert('job_tag',
+						    ['id_job' => $this->data['id'],
+							 'id_tag' => $this->data['tag'][$singleTag['tag']]['id']]);
+			}
 
             $db->commit();
             $returnValue = true;
