@@ -1,5 +1,5 @@
 <?PHP
-namespace CalEvans\Command;
+namespace ScanJobs\Command;
 /*
  * @todo break job specific functiosn out into a job mobel
  */

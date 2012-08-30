@@ -3,7 +3,7 @@
 <?php
 require_once __DIR__.'/../vendor/autoload.php'; 
 
-use CalEvans\Command;
+use ScanJobs\Command;
 use CalEvans\Google\Geocode as Geocode;
 use Knp\Provider\ConsoleServiceProvider;
 

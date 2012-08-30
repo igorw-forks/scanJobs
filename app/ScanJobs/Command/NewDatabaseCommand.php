@@ -1,5 +1,5 @@
 <?PHP
-namespace CalEvans\Command;
+namespace ScanJobs\Command;
 
 use Knp\Command\Command;
 
