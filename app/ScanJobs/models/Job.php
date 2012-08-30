@@ -231,15 +231,15 @@ class Job
 		$sql = 'select id, tag from tag where tag=?';
 		foreach ($matches[1] as $singleTag) {
 			$singleTag = strtoupper($singleTag);
+            $this->data['tag'][$singleTag] = array('id'  => null,
+	                                               'tag' => $singleTag);
 			$results = $db->executeQuery($sql,array($singleTag))
 			              ->fetchAll();
 
 			if (count($results)===1) {
-				$this->data['tag'][$singletag] = array($results);
-			} else {
-				$this->data['tag'][$singleTag] = array('id'  => null,
-													   'tag' => $singleTag);
+				$this->data['tag'][$singleTag]['id'] = $results[0]['id'];
 			}
+
 		}
 
 		return $this;
@@ -287,15 +287,15 @@ class Job
             }
 			
 			// tags
-			foreach($this->data['tag'] as $singleTag) {
+			foreach($this->data['tag'] as $key=>$singleTag) {
 				if (is_null($singleTag['id'])) {
 					$db->insert('tag',
 								['tag'=> $singleTag['tag']]);
-					$this->data['tag'][$singleTag['tag']]['id'] = $db->lastInsertId();			
+					$this->data['tag'][$key]['id'] = $db->lastInsertId();			
 				}
 				$db->insert('job_tag',
 						    ['id_job' => $this->data['id'],
-							 'id_tag' => $this->data['tag'][$singleTag['tag']]['id']]);
+							 'id_tag' => $this->data['tag'][$key]['id']]);
 			}
 
             $db->commit();
