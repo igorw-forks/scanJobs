@@ -148,10 +148,10 @@
 
 		        this.jobsList[jobData.id] = jobData;
 				
-				if (this.jobCount<155555) {
-					addToRadius = (this.jobCount*1000);
+				if (this.jobCount<80) {
+					addToRadius = (this.jobCount*500);
 				}else {
-					addToRadius = 10000;
+					addToRadius = 35000;
 				}
 
 		        this.circle.setRadius(this.circleOptions.radius + addToRadius);
@@ -188,7 +188,7 @@
 		            }
 		            $(document).data('cityList',cityList);
 		            return;
-		    	}, 500,thisCityName); // should decrement every 1 second.
+		    	}, 400,thisCityName); // should decrement every 1 second.
 		        return;
 		    };
 
