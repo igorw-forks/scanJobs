@@ -232,7 +232,7 @@ class Job
 		foreach ($matches[1] as $singleTag) {
 			$singleTag = strtoupper($singleTag);
 			$results = $db->executeQuery($sql,array($singleTag))
-			              ->fetchAssoc();
+			              ->fetchAll();
 
 			if (count($results)===1) {
 				$this->data['tag'][$singletag] = array($results);
@@ -287,7 +287,7 @@ class Job
             }
 			
 			// tags
-			foreach($this->data['tags'] as $singleTag) {
+			foreach($this->data['tag'] as $singleTag) {
 				if (is_null($singleTag['id'])) {
 					$db->insert('tag',
 								['tag'=> $singleTag['tag']]);
