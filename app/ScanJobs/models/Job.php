@@ -1,16 +1,25 @@
 <?PHP
 namespace ScanJobs\Models;
 
+/*
+ * @todo flesh out parseCompany. Pull it from the document, not the title. 
+ * Grab the URL also, store them in the datastore. Future attributes include
+ * Glassdoor score and LinkedIn mappings of employees.
+ * @todo move all location processing into a City model.
+ */
 class Job
 {
 	protected $app;
 	protected $data;
 	protected $geocoder;
+	protected $rawDocument;
 
 	public function __construct($app,$geocoder)
 	{
-		$this->app      = $app;
-		$this->geocoder = $geocoder;
+		$this->app         = $app;
+		$this->geocoder    = $geocoder;
+		$this->rawDocument = null;
+		$this->resetData();
 	}
 
 
@@ -127,6 +136,7 @@ class Job
              ->parseLocation()
 			 ->geocodeLocations()
 			 ->parseTelecommute()
+			 ->parseCompany()
 			 ->parseTags();
 
 		$pubDate = new \DateTime($job->pubDate);
@@ -141,6 +151,9 @@ class Job
 		$this->data = array('title'       => array(),
 		                    'location'    => array(),
 							'tag'         => array(),
+							'company'     => array('id'           => null,
+												   'company_name' => null,
+												   'url'          => null),
 						    'guid'        => null,
 						    'pubDate'     => null,
 							'id'          => -1,
@@ -160,7 +173,7 @@ class Job
 
         $beginCompany = strrpos($this->data['title']['full'],' at ')+4;
 
-        $this->data['title']['company'] = substr($this->data['title']['full'],$beginCompany);
+        //$this->data['title']['company'] = substr($this->data['title']['full'],$beginCompany);
         $this->data['title']['title']   = substr($this->data['title']['full'],0,$beginCompany-4);
 
         return $this;
@@ -169,6 +182,7 @@ class Job
 
     protected function parseLocation()
     {
+		// most of this should move into a city model. Let it deal with do we know it and if not geocoding it.
 		$title = $this->data['title']['original'];
         $title = trim(str_replace('(telecommute)','',$title));
         $locationStart = strripos($title,'(')+1;
@@ -245,6 +259,29 @@ class Job
 		return $this;
 	}
 
+
+	protected function parseCompany()
+	{
+        // this is a bit of brute force but it'll do for now.
+        $html = file_get_contents($this->data['guid']);
+        preg_match_all('/<a class="employer" href="(.*)" target="_blank">(.*)<\/a>/mU',$html,$matches);
+        $sql = 'select id from company where company_name=?';
+		if (count($matches)>0) {
+			$this->data['company']['company_name']   = $matches[2][0];
+			$this->data['company']['url']            = $matches[1][0];
+
+            $results = $this->app['db']->executeQuery($sql,array($this->data['company']['company_name']))
+                                       ->fetchAll();
+
+            if (count($results)===1) {
+                $this->data['company']['id'] = $results[0]['id'];
+            }   
+
+        }   
+		return $this;
+	}
+
+
 	protected function insertNewJob()
 	{
 		// do some basic data checks to make sure we have a record to save.
@@ -252,12 +289,24 @@ class Job
 		$returnValue = false;
 
         $db->beginTransaction();
+
         try {
+			// Company
+            if (is_null($this->data['company']['id'])) {
+                $db->insert('company',
+                            ['company_name' => $this->data['company']['company_name'],
+                             'url'          => $this->data['company']['url']]);
+                $this->data['company']['id'] = $db->lastInsertId(); 
+            }
+
+
             $db->insert('job',
                         ['title'       => $this->data['title']['original'],
                          'telecommute' => $this->data['telecommute'],
                          'date_posted' => $this->data['pubDate'],
-                         'guid'        => $this->data['guid'] ]);
+                         'guid'        => $this->data['guid'],
+						 'id_company'  => $this->data['company']['id'] ]);
+
             $this->data['id'] = $db->lastInsertId();
 
             // This is eventually moving into the city model
@@ -297,8 +346,9 @@ class Job
 						    ['id_job' => $this->data['id'],
 							 'id_tag' => $this->data['tag'][$key]['id']]);
 			}
-
+			
             $db->commit();
+
             $returnValue = true;
         } catch (Exception $e) {
             $db->rollback();
