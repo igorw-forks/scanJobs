@@ -18,4 +18,5 @@ $x = new Command\ScanJobsCommand();
 $x->addGeocodeer(new Geocode());
 $application->add($x);
 $application->add(new Command\NewDatabaseCommand());
+$application->add(new Command\WorkCommand());
 $application->run();
