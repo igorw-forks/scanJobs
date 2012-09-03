@@ -123,26 +123,73 @@
 		    /*
 		     * Initialalize properties
 		     */
+			this.id_city       = data.id;
+			this.city_name     = data.name;
 		    this.point         = new google.maps.LatLng(data.latitude,data.longitude);
 		    this.circleOptions = {'editable'    : false,
-		                          'clickable'   : false,
+		                          'clickable'   : true,
 		                          'strokeWeight':.25,
 		                          'fillColor'   :'#FF0000',
 		                          'center'      :this.point,
-		                          'radius'      :20000,
+		                          'radius'      :15000,
 		                          'map'         :map,
 		                          'visible'     :false};
-		    this.circle        = new google.maps.Circle(this.circleOptions);                      
+		    this.circle        = new google.maps.Circle(this.circleOptions); 
+			this.circle.owner  = this;                     
 		    this.jobsList      = {};
 		    this.name          = data.name;
 		    this.jobCount      = 0;
 		    this.opacity       = 1.0;
 		    this.timer         = null;
+			this.infoWindow    = null;
+			this.map           = map;
 
-		    /*
+			/*
 		     * Define methods
 		     */
-		    this.addJob = function (jobData) 
+			this.handleClick = function(ev)
+			{
+				var self = this;
+	            $.ajax({
+                    url: "/companies/city/"+self.owner.id_city,
+                    cache: false,
+                    dataType: 'json'})
+               .success(function (payload){ 
+	               var windowContent = "Companies located in "+self.owner.city_name+"<br />\n";
+    	            for(key=0;key<payload.results.length;key++) {
+        	            windowContent+=payload.results[key].company_name+"<br />\n";
+            	    }
+               		
+					self.owner.infoWindow = new google.maps.InfoWindow({
+                                content: windowContent 
+                              });
+					self.owner.infoWindow.setPosition(self.owner.circle.getCenter());
+					self.owner.infoWindow.open(self.owner.map);
+
+               })
+               .fail(function (data) {
+                    alert("I'm sorry, we ran into a problem fetching some of the data. Error: 42")});
+
+            return;
+
+			};
+
+			this.displayCompanies = function (payload)
+			{
+				var windowContent = "Companies located in "+this.city_name+"\n";
+				for(key=0;key<payload.results.length;key++) {
+					windowContent+=payload.results[key].company_name
+				}
+               this.infoWindo = new google.maps.InfoWindow({
+                                content: "Companies located in "+this.city_name+"\n" 
+                              });
+
+			}
+            google.maps.event.addListener(this.circle, 
+                                          'click',
+                                          this.handleClick);
+
+			this.addJob = function (jobData) 
 		    {
 				var addToRadius = 0;
 

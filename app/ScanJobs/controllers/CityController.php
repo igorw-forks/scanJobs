@@ -29,7 +29,8 @@ class CityController implements ControllerProviderInterface
 	{
 		$country='US'; //parameterize this
 		$db = $this->app['db'];
-		$sql = 'SELECT c.name,
+		$sql = 'SELECT c.id, 
+					   c.name,
 					   c.latitude,
 					   c.longitude,
 					   c.country	

@@ -213,11 +213,10 @@ class Job
 
             if ((int)$cityId>0) {
                 // we know this city already
-                $locationArray[$key]['cityId']=$cityId;
+                $this->data['location'][$key]['cityId']=$cityId;
             } else {
                 // we've got to go find this city
                 $payload = $this->geocoder->fetchGeocode($key);
-
                 if ($payload->status==="OK") {
                     $this->data['location'][$key]['latitude']  = $payload->results[0]->geometry->location->lat;
                     $this->data['location'][$key]['longitude'] = $payload->results[0]->geometry->location->lng;
@@ -315,7 +314,7 @@ class Job
                     is_null($singleLocation['latitude']) AND
                     is_null($singleLocation['longitude'])) {
                     // edge case. we don't know the city and we couldn't geocode it. skip it.
-                    continue;
+					continue;
                 }
 
                 if (is_null($singleLocation['cityId'])) {
@@ -328,7 +327,7 @@ class Job
 
                     $this->data['location'][$location]['cityId'] = $db->lastInsertId();
                 }
-
+				
                 $db->insert('job_city',
                             ['id_job'  => $this->data['id'],
                              'id_city' => $this->data['location'][$location]['cityId']]);

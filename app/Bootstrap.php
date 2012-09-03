@@ -4,6 +4,9 @@
  */
 $env = getenv('APP_ENV') ?: 'prod';
 
+use ScanJobs\Controllers;
+
+
 /*
  * Create the application
  */
@@ -22,9 +25,12 @@ $app->register(new Silex\Provider\ValidatorServiceProvider());
 $app->register(new Silex\Provider\DoctrineServiceProvider(), 
                array('db.options' => $app['database']));
 
-
 /*
  * Build the routes 
  */
+$app->mount('/jobs', new Controllers\JobsController());
+$app->mount('/cities', new Controllers\CityController());
+$app->mount('/companies', new Controllers\CompanyController());
+$app->mount('/', new Controllers\IndexController());
 
 return $app;
