@@ -4,7 +4,6 @@
     "require": {
 		"symfony/config": "dev-master",
 		"silex/silex": "1.0.*",
-		"symfony/yaml": "dev-master",
 		"doctrine/dbal": ">=2.2",
 		"knplabs/console-service-provider": ">=1.0.0",
 		"igorw/config-service-provider": "*.*.*"

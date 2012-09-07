@@ -26,7 +26,6 @@ class Job
 	public function load($id=null)
 	{
 		$this->resetData();
-
 		$db = $this->app['db'];
 		
 		$sql = 'select j.*,
@@ -46,7 +45,6 @@ class Job
 			// probably better to throw an exception here.
 			return false;
 		}
-
 		$this->data['guid']        = $results[0]['guid'];
 		$this->data['pubDate']     = $results[0]['pubDate'];
 		$this->data['title']       = array('title'=>$results[0]['title']);
@@ -131,7 +129,7 @@ class Job
 	{
 		$this->resetData();
 		$this->data['guid'] = (string)$job->guid;
-
+		$this->fetchHTML($this->data['guid']);
 		$this->parseTitle((string)$job->title)
              ->parseLocation()
 			 ->geocodeLocations()
@@ -237,22 +235,23 @@ class Job
 	
 	protected function parseTags()
 	{
-		$db = $this->app['db'];
-		// this is a bit of brute force but it'll do for now.
-		$html = file_get_contents($this->data['guid']);
-		preg_match_all('/<a class="post-tag" href=".*">(.*)<\/a>/mU',$html,$matches);
-		$sql = 'select id, tag from tag where tag=?';
-		foreach ($matches[1] as $singleTag) {
-			$singleTag = strtoupper($singleTag);
-            $this->data['tag'][$singleTag] = array('id'  => null,
+		if (!empty($this->rawDocument)) {
+			$db = $this->app['db'];
+			// this is a bit of brute force but it'll do for now.
+			preg_match_all('/<a class="post-tag" href=".*">(.*)<\/a>/mU',$this->rawDocument,$matches);
+			$sql = 'select id, tag from tag where tag=?';
+			foreach ($matches[1] as $singleTag) {
+				$singleTag = strtoupper($singleTag);
+	            $this->data['tag'][$singleTag] = array('id'  => null,
 	                                               'tag' => $singleTag);
-			$results = $db->executeQuery($sql,array($singleTag))
-			              ->fetchAll();
+				$results = $db->executeQuery($sql,array($singleTag))
+				              ->fetchAll();
 
-			if (count($results)===1) {
-				$this->data['tag'][$singleTag]['id'] = $results[0]['id'];
+				if (count($results)===1) {
+					$this->data['tag'][$singleTag]['id'] = $results[0]['id'];
+				}
+
 			}
-
 		}
 
 		return $this;
@@ -261,22 +260,22 @@ class Job
 
 	protected function parseCompany()
 	{
-        // this is a bit of brute force but it'll do for now.
-        $html = file_get_contents($this->data['guid']);
-        preg_match_all('/<a class="employer" href="(.*)" target="_blank">(.*)<\/a>/mU',$html,$matches);
-        $sql = 'select id from company where company_name=?';
-		if (count($matches)>0) {
-			$this->data['company']['company_name']   = $matches[2][0];
-			$this->data['company']['url']            = $matches[1][0];
+		if (!empty($this->rawDocument)) {
+			preg_match_all('/<a class="employer" href="(.*)" target="_blank">(.*)<\/a>/mU',$this->rawDocument,$matches);
+			$sql = 'select id from company where company_name=?';
+			if (count($matches)>0) {
+				$this->data['company']['company_name']   = $matches[2][0];
+				$this->data['company']['url']            = $matches[1][0];
 
-            $results = $this->app['db']->executeQuery($sql,array($this->data['company']['company_name']))
-                                       ->fetchAll();
+				$results = $this->app['db']->executeQuery($sql,array($this->data['company']['company_name']))
+					                       ->fetchAll();
 
-            if (count($results)===1) {
-                $this->data['company']['id'] = $results[0]['id'];
-            }   
+				if (count($results)===1) {
+					$this->data['company']['id'] = $results[0]['id'];
+				}   
 
-        }   
+			}
+		}	
 		return $this;
 	}
 
@@ -358,11 +357,20 @@ class Job
 		
 		return $returnValue;
 	}
-
-
+	
+	
 	protected function updateExistingJob()
 	{
 		return $returnValue;
 	}
+	
+	
+	protected function fetchHTML($guid)
+	{
+		// throw an exception here if it can't load?
+		$this->rawDocument = file_get_contents($guid);
+		return $this;
+	}
+	
 	
 }

@@ -131,7 +131,7 @@
 		                          'strokeWeight':.25,
 		                          'fillColor'   :'#FF0000',
 		                          'center'      :this.point,
-		                          'radius'      :15000,
+		                          'radius'      :10000,
 		                          'map'         :map,
 		                          'visible'     :false};
 		    this.circle        = new google.maps.Circle(this.circleOptions); 
@@ -195,7 +195,7 @@
 
 		        this.jobsList[jobData.id] = jobData;
 				
-				if (this.jobCount<80) {
+				if (this.jobCount<100) {
 					addToRadius = (this.jobCount*500);
 				}else {
 					addToRadius = 35000;
