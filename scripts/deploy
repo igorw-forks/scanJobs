@@ -1,19 +1,82 @@
 #!/bin/bash
-git branch -D deploy
-git checkout -b deploy 
+#
+# Deploy - deploy a composer.phar managed project using git ready to be pulled into a platform.
+#
+# Original Author: Davey Shafik <davey@enginyard.com>
+# Modified by: Cal Evans <cal@calevans.com>
+#
+# This script is released into the public domain.
+#
+# Prepare a composer.phar managed project and deploy it to an external repo.
+# The composer.phar managed direcotry "vendor" is not mantained in git. This
+# causes problems if you are using Orchstra, phpcloud.com, or any PaaS that
+# works by pulling a specific branch from a given repo as it will never be
+# able to pull the code stored there. Since those platforms also do not give
+# you a command line to run composer.phar from, they are difficult to work 
+# with. This script solves that problem. It creates a branch on an external 
+# repo that contains all of the code that composer.phar mantains. You can 
+# then pull from that repo instead of your working repo.
+#
+
+#
+# Initalize needed variables
+#
+REPO_NAME="external"
+BRANCH_NAME="deploy"
+
+#
+# Create the deploy branch.
+#
+git branch -D $BRANCH_NAME
+git checkout -b $BRANCH_NAME
+
+#
+# Remove the vendor directory from .gitignore.
+#
 cat .gitignore | grep -v vendor > .gitignore.new 
 mv .gitignore.new .gitignore
+
+#
+# Find and remove all the .git direcotries and .gitignore files.
+#
 for gitdir in `find ./vendor -name ".git"` 
 do
 	BASENAME=$(dirname $gitdir)
 	rm -rf $BASENAME"/.git"
 	rm -rf $BASENAME"/.gitignore"
 done
+
+#
+# Set the proper permissions
+#
 chmod -R 775 vendor 
+
+#
+# Add the vendor directory into the repo
+#
 git add vendor 
 git commit -a -m "Integrate vendors for deploy" && \
-git push -f external deploy
+
+#
+# Push it to the master repo "external".
+#
+git push -f $REPO_NAME $BRANCH_NAME
+
+#
+# Undo all of the damage
+#
 git checkout master
-git branch -D deploy
+git branch -D $BRANCH_NAME
+
+#
+# Because none of the .git directories exist anymore, composer can no longer 
+# manage the depenendancies in the vendor directory. We can solve this by 
+# running composer.phar update. It will assume it is installing all of the 
+# dependancies new.
+#
 composer.phar update
-echo "Deploy branch completed"
+
+#
+# Let the user know what happened.
+#
+echo $BRANCH_NAME" branch completed"
