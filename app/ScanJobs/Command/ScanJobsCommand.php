@@ -37,11 +37,16 @@ class ScanJobsCommand extends Command
 				// we already know this job
 				continue;
 			}
-			$job = new Job($app,$this->geocoder);
-			$job->parse($singleItem);
-			$job->save();
-			// Notify the console that we did something
-			$output->writeln($singleItem->title);
+			try 
+			{
+				$job = new Job($app,$this->geocoder);
+				$job->parse($singleItem);
+				$job->save();
+				// Notify the console that we did something
+				$output->writeln($singleItem->title);
+			} Catch (\Exception $e) {
+				// Do Nothing here?
+			}
 		}
 		return;
     }

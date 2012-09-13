@@ -13,9 +13,9 @@ $app->register(new ConsoleServiceProvider(),
                       'console.version'           => '1.0.0',
                       'console.project_directory' => __DIR__.'/..'));
 $application = $app['console'];
-$x = new Command\ScanJobsCommand();
-$x->addGeocodeer(new Geocode());
-$application->add($x);
+$scan = new Command\ScanJobsCommand();
+$scan->addGeocodeer(new Geocode());
+$application->add($scan);
 $application->add(new Command\NewDatabaseCommand());
 $application->add(new Command\WorkCommand());
 $application->run();

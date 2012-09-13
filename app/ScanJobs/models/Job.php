@@ -129,17 +129,23 @@ class Job
 	{
 		$this->resetData();
 		$this->data['guid'] = (string)$job->guid;
-		$this->fetchHTML($this->data['guid']);
-		$this->parseTitle((string)$job->title)
-             ->parseLocation()
-			 ->geocodeLocations()
-			 ->parseTelecommute()
-			 ->parseCompany()
-			 ->parseTags();
+		try 
+		{
+			$this->fetchHTML($this->data['guid']);
+			$this->parseTitle((string)$job->title)
+				 ->parseLocation()
+				 ->geocodeLocations()
+				 ->parseTelecommute()
+				 ->parseCompany()
+				 ->parseTags();
 
-		$pubDate = new \DateTime($job->pubDate);
-		$this->data['pubDate']     = $pubDate->format('Y-m-d h:i e');
-
+			$pubDate = new \DateTime($job->pubDate);
+			$this->data['pubDate']     = $pubDate->format('Y-m-d h:i e');
+		} Catch (\Exception $e) {
+			if ($e->getCode()===1) {
+				throw new \Exception('There was a problem loading the data from the site.');
+			}
+		}
         return $this;
     }
 
@@ -171,7 +177,6 @@ class Job
 
         $beginCompany = strrpos($this->data['title']['full'],' at ')+4;
 
-        //$this->data['title']['company'] = substr($this->data['title']['full'],$beginCompany);
         $this->data['title']['title']   = substr($this->data['title']['full'],0,$beginCompany-4);
 
         return $this;
@@ -369,6 +374,9 @@ class Job
 	{
 		// throw an exception here if it can't load?
 		$this->rawDocument = file_get_contents($guid);
+		if (empty($this->rawDocument)) {
+			throw new \Exception('There was a problem loading the page from the site.',1);
+		}
 		return $this;
 	}
 	

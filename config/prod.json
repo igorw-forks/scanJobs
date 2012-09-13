@@ -1,1 +1,1 @@
-{"application_dir":".\/","document_dir":".\/\/public","database":{"user":null,"password":null,"driver":"pdo_sqlite","path":".\/\/data\/scanJobs.sqlite"},"debug":true,"googlemaps":{"apikey":"AIzaSyANajU1W0SpMTU0OSRJdQqea0i7ecv8BjQ"}}
+{"application_dir":".\/","document_dir":".\/\/public","database":{"user":null,"password":null,"driver":"pdo_sqlite","path":".\/\/data\/scanJobs.sqlite"},"debug":false,"googlemaps":{"apikey":"AIzaSyANajU1W0SpMTU0OSRJdQqea0i7ecv8BjQ"}}
