@@ -19,13 +19,20 @@
 #
 
 #
-# Initalize needed variables
+# Initialize needed variables
+# Change these to suit your needs.
+# REPO_NAME is the name of the external repo you push to. this should be 
+#           defined in your .git/config
+# BRANCH_NAME is the name of the branch to temporarily create in order to push
+#             to the external repo. IF THIS BRANCH EXISTS IT WILL BE DELEITED!
 #
 REPO_NAME="external"
 BRANCH_NAME="deploy"
 
 #
-# Create the deploy branch.
+# Create the deploy branch. 
+# In most cases, the first one will throw an error because the branch doesn't
+# exist. That's ok, it's just a safety measure.
 #
 git branch -D $BRANCH_NAME
 git checkout -b $BRANCH_NAME
@@ -37,7 +44,7 @@ cat .gitignore | grep -v vendor > .gitignore.new
 mv .gitignore.new .gitignore
 
 #
-# Find and remove all the .git direcotries and .gitignore files.
+# Find and remove all the .git directories and .gitignore files.
 #
 for gitdir in `find ./vendor -name ".git"` 
 do
@@ -55,7 +62,7 @@ chmod -R 775 vendor
 # Add the vendor directory into the repo
 #
 git add vendor 
-git commit -a -m "Integrate vendors for deploy" && \
+git commit -a -m "Integrate vendors for deploy" 
 
 #
 # Push it to the master repo "external".
