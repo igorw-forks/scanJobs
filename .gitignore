@@ -4,3 +4,4 @@ tmp/*
 data/*
 .*.swp
 vendor
+config
