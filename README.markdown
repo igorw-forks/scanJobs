@@ -20,7 +20,7 @@ It is a simple web application based on the Silex framework that will scan the j
 2. Configure Apache to use /path/to/directory/public as the document root.
 3. In the project root (the directory with the composer.json file) run the command 
 
-	composer.phar update
+    composer.phar update
 
 4. Create a directory named config in your application root directory.	
 5. get a Google Maps API key and put it in the appropriate place in make_dev.php and make_prod.php.
@@ -28,8 +28,9 @@ It is a simple web application based on the Silex framework that will scan the j
 6. Make sure that app/console.sh has execute privileges.
 7. Execute the following commands.
 
-	app/console.sh makeDatabase
-	app/console.sh scan
+    app/console.sh makeDatabase
+
+    app/console.sh scan
 
 8. Point a browser to the IP address or domain name you configured the web server to respond to.	
 
