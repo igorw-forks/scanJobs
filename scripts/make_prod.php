@@ -10,6 +10,6 @@ $a['database']['password'] = null;
 $a['database']['driver'] = 'pdo_sqlite';
 $a['database']['path'] = $a['application_dir'] . '/data/scanJobs.sqlite';
 $a['debug'] = false;
-$a['googlemaps']['apikey'] = 'AIzaSyANajU1W0SpMTU0OSRJdQqea0i7ecv8BjQ';
+$a['googlemaps']['apikey'] = '';
 $b = json_encode($a);
 file_put_contents('../config/prod.json',$b);
