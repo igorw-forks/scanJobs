@@ -1,5 +1,5 @@
 <?PHP
-namespace ScanJobs\Controllers;
+namespace ScanJobs\Controller;
 
 use Silex\Application;
 use Silex\ControllerProviderInterface;

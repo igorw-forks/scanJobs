@@ -1,10 +1,10 @@
 <?PHP
-namespace ScanJobs\Controllers;
+namespace ScanJobs\Controller;
 
 use Silex\Application;
 use Silex\ControllerProviderInterface;
 use Silex\ControllerCollection;
-use ScanJobs\Models\Job;
+use ScanJobs\Model\Job;
 
 class JobsController implements ControllerProviderInterface
 {   

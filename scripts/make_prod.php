@@ -1,6 +1,5 @@
 #!/usr/bin/env php
 <?PHP
-// there has got to be an easier way
 $a = array();
 $a['application_dir'] = './';
 $a['document_dir'] = $a['application_dir'].'/public';

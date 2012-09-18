@@ -1,5 +1,5 @@
 <?PHP
-namespace ScanJobs\Models;
+namespace ScanJobs\Model;
 
 /*
  * @todo flesh out parseCompany. Pull it from the document, not the title. 

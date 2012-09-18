@@ -4,7 +4,7 @@ namespace ScanJobs\Command;
  * @todo break job specific functiosn out into a job mobel
  */
 use CalEvans\Google;
-use ScanJobs\Models\Job;
+use ScanJobs\Model\Job;
 
 use Knp\Command\Command;
 
