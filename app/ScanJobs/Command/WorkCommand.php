@@ -17,6 +17,18 @@ class WorkCommand extends Command
 	{
 
 		$db     = $this->getSilexApplication()['db'];
+		
+		$sql = "select * from tag";
+		$results = $db->executeQuery($sql)->fetchAll();
+		$output = array();
+		foreach($results as $singleTagArray) {
+			$output[] = "insert into term (term,language) VALUES ('{$singleTagArray['tag']}'," .
+			                                                     "{$singleTagArray['language']});";
+		}
+		$payload = implode("\n",$output);
+		file_put_contents('/tmp/tags.sql',$payload);
+		echo "Done";
+		return;
 		$sql = 'select * from company';
 		$results = $db->executeQuery($sql)->fetchAll();
 		$apicall = 'http://ec2-107-21-104-179.compute-1.amazonaws.com/v/1/company/%s.js';
