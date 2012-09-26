@@ -76,7 +76,7 @@
 
 		function startPlot()
 		{
-			timer = setInterval(plotJobs,50)
+			timer = setInterval(plotJobs,10)
 			$(document).data('jobPlotTimer',timer);
 			return;
 		}
@@ -196,9 +196,9 @@
 		        this.jobsList[jobData.id] = jobData;
 				
 				if (this.jobCount<100) {
-					addToRadius = (this.jobCount*500);
+					addToRadius = (this.jobCount*100);
 				}else {
-					addToRadius = 35000;
+					addToRadius = 20000;
 				}
 
 		        this.circle.setRadius(this.circleOptions.radius + addToRadius);
