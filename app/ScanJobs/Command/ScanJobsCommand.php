@@ -18,7 +18,7 @@ class ScanJobsCommand extends Command
              ->setDescription('Run the job scan');
     }
 
-	public function addGeocodeer($geocoder)
+	public function addGeocoder($geocoder)
 	{
 		$this->geocoder = $geocoder;
 	}
