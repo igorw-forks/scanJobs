@@ -6,12 +6,13 @@ use ScanJobs\Controller;
 $app = require '../app/Bootstrap.php';
 
 /*
- * Build the routes 
+ * Build the routes
  */
-$app->mount('/jobs', new Controller\JobsController());
-$app->mount('/cities', new Controller\CityController());
 $app->mount('/companies', new Controller\CompanyController());
-$app->mount('/', new Controller\IndexController());
+
+$app->get('/jobs/', 'ScanJobs\Controller\MainController::jobListAction');
+$app->get('/cities/', 'ScanJobs\Controller\MainController::cityListAction');
+$app->get('/', 'ScanJobs\Controller\MainController::indexAction');
 
 /*
  * Do the deed
