@@ -1,14 +1,15 @@
 {
-	"name": "scanJobs",
-	"minimum-stability": "dev", 
+    "name": "scanJobs",
+    "minimum-stability": "dev",
     "require": {
-		"silex/silex": "1.0.*",
-		"doctrine/dbal": ">=2.2",
-		"knplabs/console-service-provider": ">=1.0.0",
-		"igorw/config-service-provider": "*.*.*"
+        "silex/silex": "1.0.*",
+        "doctrine/dbal": ">=2.2",
+        "knplabs/console-service-provider": ">=1.0.0",
+        "igorw/config-service-provider": "*.*.*"
     },
     "autoload": {
-        "psr-0": {"CalEvans": "src/",
-				  "ScanJobs": "app/"}
-	}
+        "psr-0": {
+            "CalEvans": "src/",
+            "ScanJobs": "app/"}
+    }
 }
